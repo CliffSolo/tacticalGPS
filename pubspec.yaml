@@ -1,0 +1,28 @@
+name: tactical_compass
+description: Tactical GPS Dashboard - MGRS, Compass, Elevation, Navigation
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^11.0.0
+  flutter_compass: ^0.8.0
+  mgrs_dart: ^3.0.0
+  geocoding: ^2.2.1
+  wakelock_plus: ^1.2.5
+  permission_handler: ^11.3.0
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+  provider: ^6.1.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
