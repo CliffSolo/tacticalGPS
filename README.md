@@ -55,3 +55,7 @@ android/ ios/ linux/ macos/ web/ windows/   Flutter platform folders
 - [ ] Emergency signal button
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history.
+
+## License
+
+[MIT](LICENSE) © 2026 Matthew Birtwistle.

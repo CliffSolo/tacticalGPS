@@ -60,3 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - Address and coordinates blanked out in `docs/screenshot.png` before publishing.
+
+## 2026-10-26 - License
+
+### Added
+- MIT `LICENSE` file and a License section in the README.
