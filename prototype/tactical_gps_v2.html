@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#181825">
+<title>Tactical GPS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+  :root{
+    --base:#1E1E2E;--mantle:#181825;--crust:#11111B;
+    --s0:#313244;--s1:#45475A;--s2:#585B70;--o0:#6C7086;
+    --text:#CDD6F4;--sub:#A6ADC8;
+    --blue:#89B4FA;--green:#A6E3A1;--red:#F38BA8;--peach:#FAB387;--mauve:#CBA6F7;--teal:#94E2D5;--yellow:#F9E2AF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--base);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100%}
+  #app{max-width:430px;margin:0 auto;padding:10px 12px calc(86px + env(safe-area-inset-bottom));display:grid;gap:8px}
+  .card{background:var(--mantle);border:1px solid var(--s1);border-radius:14px;padding:10px 12px}
+  .lbl{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:2px;font-weight:700;margin-bottom:4px}
+  .val{font-size:13px;line-height:1.45}
+  .big{font-family:'Rajdhani',sans-serif;font-weight:700}
+
+  header{display:flex;justify-content:space-between;align-items:center}
+  .title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;letter-spacing:4px;color:var(--blue)}
+  .hdr-r{display:flex;gap:8px;align-items:center}
+  .chip-acc{background:var(--s0);border-radius:8px;padding:4px 10px;font-size:12px;color:var(--sub);transition:color .3s}
+  .chip-acc.good{color:var(--green)} .chip-acc.ok{color:var(--yellow)} .chip-acc.bad{color:var(--red)}
+  .iconbtn{background:var(--s0);border:1px solid var(--s1);color:var(--sub);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer}
+  .iconbtn.on{color:var(--green);border-color:var(--green)}
+
+  .hero{display:flex;flex-direction:column;align-items:center;padding:8px}
+  #rose{width:min(72vw,270px);height:min(72vw,270px);display:block}
+  .hd{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:28px;color:var(--blue);letter-spacing:3px;margin-top:2px}
+  .hd small{font-size:12px;color:var(--sub);letter-spacing:4px;margin-left:6px}
+
+  #target .row{display:flex;justify-content:space-between;align-items:flex-end}
+  #tName{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:20px;color:var(--peach);letter-spacing:2px}
+  #tDist{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:26px}
+  #tSub{font-size:11px;color:var(--sub);margin-top:2px}
+  .bar{height:6px;background:var(--s0);border-radius:4px;margin-top:8px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--peach),var(--green));transition:width .6s ease}
+  #target.arrived{border-color:var(--green);animation:pulse 1s ease 2}
+  @keyframes pulse{50%{box-shadow:0 0 22px rgba(166,227,161,.45)}}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .span2{grid-column:1/3}
+  .c-mgrs{color:var(--green)} .c-ll{color:var(--peach)} .c-alt{color:var(--red)} .c-addr{color:var(--mauve)}
+
+  .tray{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .tray::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;background:var(--s0);border:1px solid var(--s1);border-radius:10px;padding:6px 10px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+  .chip b{font-family:'Rajdhani',sans-serif;letter-spacing:1px}
+  .chip.t{border-color:var(--peach);color:var(--peach)}
+  .chip.v{border-color:var(--green);color:var(--green);opacity:.75}
+  .chip .x{color:var(--o0);padding-left:2px}
+  .empty{font-size:11px;color:var(--o0);padding:6px 2px}
+  .addrow{display:flex;gap:6px}
+  .addrow input{flex:1;background:var(--s0);border:1px solid var(--s1);border-radius:8px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 10px;outline:none}
+  .addrow input:focus{border-color:var(--blue)}
+  .addrow button{background:var(--s0);border:1px solid var(--blue);color:var(--blue);border-radius:8px;padding:0 14px;font-size:16px}
+
+  .dock{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--base) 35%)}
+  #drop{display:block;width:100%;max-width:406px;margin:0 auto;padding:15px;border:none;border-radius:14px;
+    background:linear-gradient(135deg,#89B4FA,#74C7EC);color:var(--crust);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:3px;cursor:pointer;transition:transform .1s}
+  #drop:active{transform:scale(.97)}
+  #toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-80px);background:var(--s0);border:1px solid var(--green);color:var(--green);padding:8px 16px;border-radius:20px;font-size:12px;letter-spacing:1px;transition:transform .3s;z-index:20}
+  #toast.show{transform:translate(-50%,0)}
+  #start{position:fixed;inset:0;background:rgba(17,17,27,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:30;text-align:center;padding:24px}
+  #start .title{font-size:26px;letter-spacing:6px}
+  #start p{color:var(--sub);font-size:12px;line-height:1.7;max-width:300px}
+  #startBtn{padding:14px 40px;border-radius:14px;border:none;background:linear-gradient(135deg,#89B4FA,#74C7EC);color:var(--crust);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:3px}
+</style>
+</head>
+<body>
+
+<div id="start">
+  <div class="title">TACTICAL GPS</div>
+  <p>Live position, compass and waypoints on one screen.<br>Tap start to allow location and motion sensors.</p>
+  <button id="startBtn">START</button>
+</div>
+<div id="toast"></div>
+
+<div id="app">
+  <header>
+    <div class="title">TACTICAL GPS</div>
+    <div class="hdr-r">
+      <button class="iconbtn" id="wake">☀ AWAKE</button>
+      <div class="chip-acc" id="acc">ACQUIRING</div>
+    </div>
+  </header>
+
+  <section class="card hero">
+    <canvas id="rose"></canvas>
+    <div class="hd"><span id="hdg">---°</span><small id="hdgL">--</small></div>
+  </section>
+
+  <section class="card" id="target">
+    <div class="lbl" style="color:var(--peach)">⦾ TARGET</div>
+    <div class="row">
+      <div><div id="tName">NO TARGET</div><div id="tSub">Drop a waypoint, then tap it to navigate</div></div>
+      <div style="text-align:right"><div id="tDist">--</div></div>
+    </div>
+    <div class="bar"><i id="tBar"></i></div>
+  </section>
+
+  <section class="grid">
+    <div class="card span2"><div class="lbl c-mgrs">⊞ MGRS</div><div class="val big" style="font-size:20px;letter-spacing:2px" id="mgrs">--</div></div>
+    <div class="card"><div class="lbl c-ll">↕ LAT / LON</div><div class="val" id="ll">--</div></div>
+    <div class="card"><div class="lbl c-alt">▲ ALTITUDE</div><div class="val" id="alt">--</div></div>
+  </section>
+
+  <section class="card"><div class="lbl c-addr">⦿ CURRENT LOCATION</div><div class="val" id="addr">Waiting for fix…</div></section>
+
+  <section>
+    <div class="tray" id="tray"></div>
+    <div class="addrow" style="margin-top:6px">
+      <input id="ll-in" inputmode="decimal" placeholder="Add by lat, lon  (40.7128, -74.0060)">
+      <button id="ll-add">＋</button>
+    </div>
+  </section>
+</div>
+
+<div class="dock"><button id="drop">⚑ DROP WAYPOINT HERE</button></div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const C={base:'#1E1E2E',mantle:'#181825',s1:'#45475A',s2:'#585B70',o0:'#6C7086',text:'#CDD6F4',sub:'#A6ADC8',blue:'#89B4FA',green:'#A6E3A1',red:'#F38BA8',peach:'#FAB387',teal:'#94E2D5'};
+const R=6371000, rad=d=>d*Math.PI/180, deg=r=>r*180/Math.PI;
+const NATO=['ALPHA','BRAVO','CHARLIE','DELTA','ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO','LIMA','MIKE','NOVEMBER','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA','TANGO','UNIFORM','VICTOR','WHISKEY','XRAY','YANKEE','ZULU'];
+const CARD=['N','NE','E','SE','S','SW','W','NW'];
+
+/* ---------- math ---------- */
+function dist(a,b){const dLa=rad(b.lat-a.lat),dLo=rad(b.lon-a.lon);const h=Math.sin(dLa/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function brg(a,b){const y=Math.sin(rad(b.lon-a.lon))*Math.cos(rad(b.lat));const x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lon-a.lon));return (deg(Math.atan2(y,x))+360)%360;}
+function fmtD(m){return m<1000?Math.round(m)+' m':(m/1000).toFixed(2)+' km';}
+function fmtF(m){const f=m*3.28084;return f<2640?Math.round(f).toLocaleString()+' ft':(f/5280).toFixed(2)+' mi';}
+function mgrs(lat,lon){
+  if(lat<-80||lat>84)return 'OUT OF RANGE';
+  const a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2);
+  const zone=Math.floor((lon+180)/6)+1, lam0=rad((zone-1)*6-180+3);
+  const p=rad(lat),l=rad(lon),N=a/Math.sqrt(1-e2*Math.sin(p)**2),T=Math.tan(p)**2,Cc=ep2*Math.cos(p)**2,A=Math.cos(p)*(l-lam0);
+  const M=a*((1-e2/4-3*e2**2/64-5*e2**3/256)*p-(3*e2/8+3*e2**2/32+45*e2**3/1024)*Math.sin(2*p)+(15*e2**2/256+45*e2**3/1024)*Math.sin(4*p)-(35*e2**3/3072)*Math.sin(6*p));
+  let x=k0*N*(A+(1-T+Cc)*A**3/6+(5-18*T+T*T+72*Cc-58*ep2)*A**5/120)+500000;
+  let y=k0*(M+N*Math.tan(p)*(A*A/2+(5-T+9*Cc+4*Cc*Cc)*A**4/24+(61-58*T+T*T+600*Cc-330*ep2)*A**6/720));
+  if(lat<0)y+=10000000;
+  const band='CDEFGHJKLMNPQRSTUVWX'[Math.min(19,Math.floor((lat+80)/8))];
+  const col=['ABCDEFGH','JKLMNPQR','STUVWXYZ'][(zone-1)%3][Math.floor(x/100000)-1];
+  const row='ABCDEFGHJKLMNPQRSTUV'[(Math.floor(y/100000)+(zone%2===0?5:0))%20];
+  const pad=n=>String(Math.floor(n)).padStart(5,'0');
+  return `${zone}${band} ${col}${row} ${pad(x%100000)} ${pad(y%100000)}`;
+}
+
+/* ---------- state ---------- */
+let S={wps:[],target:null,counter:0,startDist:null};
+try{const s=localStorage.getItem('tgps_v2');if(s)S=Object.assign(S,JSON.parse(s));}catch(e){}
+const save=()=>{try{localStorage.setItem('tgps_v2',JSON.stringify(S));}catch(e){}};
+
+/* ---------- accuracy: Kalman filter weighted by reported accuracy ---------- */
+const KF={lat:0,lon:0,v:-1,ts:0,has:false};
+function kfUpdate(lat,lon,acc,ts,speed){
+  acc=Math.max(acc,1);
+  if(!KF.has){KF.lat=lat;KF.lon=lon;KF.v=acc*acc;KF.ts=ts;KF.has=true;return;}
+  const q=Math.min(15,Math.max(0.5,speed||0.5));          // process noise follows movement
+  const dt=Math.max(0,ts-KF.ts);
+  KF.v+=dt*q*q/1000; KF.ts=ts;
+  const K=KF.v/(KF.v+acc*acc);
+  KF.lat+=K*(lat-KF.lat); KF.lon+=K*(lon-KF.lon); KF.v=(1-K)*KF.v;
+}
+
+/* ---------- live data ---------- */
+const P={lat:null,lon:null,acc:null,alt:null,altAcc:null,speed:0,gpsHdg:null,terrain:null};
+let H=0, hTarget=0, lastCompass=0, started=false;
+let lastTerrain=null, lastGeo={t:0,lat:null,lon:null};
+
+function onFix(pos){
+  const c=pos.coords;
+  if(KF.has && c.accuracy>150) return;                       // throw away junk fixes
+  kfUpdate(c.latitude,c.longitude,c.accuracy,pos.timestamp,c.speed);
+  P.lat=KF.lat;P.lon=KF.lon;P.acc=c.accuracy;P.speed=c.speed||0;
+  P.gpsHdg=(c.heading!=null&&!isNaN(c.heading)&&(c.speed||0)>1.5)?c.heading:null;
+  if(c.altitude!=null){P.alt=P.alt==null?c.altitude:P.alt+0.2*(c.altitude-P.alt);P.altAcc=c.altitudeAccuracy;}
+  fetchTerrain();geocode();
+  updateUI();
+}
+function onErr(e){
+  $('acc').textContent=e.code===1?'DENIED':'NO FIX';$('acc').className='chip-acc bad';
+  $('addr').textContent=e.code===1?'Location permission denied. Enable it in browser/app settings.':'Waiting for GPS signal…';
+}
+
+async function fetchTerrain(){
+  if(lastTerrain&&dist(lastTerrain,P)<75)return;
+  lastTerrain={lat:P.lat,lon:P.lon};
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${P.lat.toFixed(5)}&longitude=${P.lon.toFixed(5)}`);
+    const j=await r.json(); if(j.elevation&&j.elevation.length)P.terrain=j.elevation[0];
+    updateUI();
+  }catch(e){}
+}
+async function geocode(){
+  const now=Date.now();
+  if(lastGeo.lat!=null&&(dist(lastGeo,P)<40||now-lastGeo.t<20000))return;
+  lastGeo={t:now,lat:P.lat,lon:P.lon};
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&lat=${P.lat.toFixed(6)}&lon=${P.lon.toFixed(6)}`);
+    const j=await r.json(),a=j.address||{};
+    const l1=[a.house_number,a.road].filter(Boolean).join(' ')||j.name||'';
+    const l2=[a.city||a.town||a.village||a.hamlet,a.state,a.postcode].filter(Boolean).join(', ');
+    $('addr').dataset.t=(l1?l1+', ':'')+l2||j.display_name||'';
+    renderAddr();
+  }catch(e){}
+}
+function renderAddr(){
+  const hint=(P.acc&&P.acc>25)?` <span style="color:var(--yellow)">· fix ±${Math.round(P.acc)} m, clear sky view helps</span>`:'';
+  const t=$('addr').dataset.t;
+  $('addr').innerHTML=(t||'Locating address…')+hint;
+}
+
+/* ---------- UI ---------- */
+function targetWp(){return S.wps.find(w=>w.id===S.target)||null;}
+function updateUI(){
+  if(P.lat==null)return;
+  const a=P.acc;
+  $('acc').textContent='±'+Math.round(a)+' m';
+  $('acc').className='chip-acc '+(a<=10?'good':a<=25?'ok':'bad');
+  $('mgrs').textContent=mgrs(P.lat,P.lon);
+  $('ll').innerHTML=`${Math.abs(P.lat).toFixed(5)}° ${P.lat>=0?'N':'S'}<br>${Math.abs(P.lon).toFixed(5)}° ${P.lon>=0?'E':'W'}`;
+  // altitude: MSL from GPS, "radar" (AGL) = altitude minus topographic ground elevation
+  const T=P.terrain, msl=P.alt!=null?P.alt:T;
+  let h='';
+  if(msl!=null){h+=`MSL ${Math.round(msl)} m / ${Math.round(msl*3.281).toLocaleString()} ft`+(P.alt==null?' <span style="color:var(--o0)">est</span>':'');}
+  else h+='MSL --';
+  if(msl!=null&&T!=null){const agl=P.alt!=null?Math.max(0,P.alt-T):0;h+=`<br>AGL ${Math.round(agl)} m / ${Math.round(agl*3.281)} ft`;}
+  else h+='<br>AGL --';
+  $('alt').innerHTML=h;
+  renderAddr();
+  updateTarget();updateDists();
+}
+function updateTarget(){
+  const w=targetWp(),box=$('target');
+  if(!w||P.lat==null){
+    $('tName').textContent='NO TARGET';$('tDist').textContent='--';$('tBar').style.width='0';
+    $('tSub').textContent=S.wps.length?'Tap a waypoint below to navigate':'Drop a waypoint, then tap it to navigate';return;
+  }
+  const d=dist(P,w),b=brg(P,w);
+  $('tName').textContent=w.name;$('tDist').textContent=fmtD(d);
+  const eta=P.speed>0.5?` · ETA ${Math.max(1,Math.round(d/P.speed/60))} min`:'';
+  $('tSub').textContent=`BRG ${Math.round(b)}° ${CARD[Math.round(b/45)%8]} · ${fmtF(d)}${eta}`;
+  if(!S.startDist||S.startDist<d)S.startDist=d;
+  $('tBar').style.width=Math.max(0,Math.min(100,(1-d/S.startDist)*100))+'%';
+  if(d<=Math.max(8,Math.min(P.acc||30,30)))arrive(w);
+}
+function arrive(w){
+  w.visited=true;
+  buzz([80,60,80,60,200]);toast('✔ '+w.name+' REACHED');
+  box_arrived();
+  const next=S.wps.filter(x=>!x.visited).sort((a,b)=>dist(P,a)-dist(P,b))[0];
+  S.target=next?next.id:null;S.startDist=next?dist(P,next):null;
+  save();renderTray();
+}
+function box_arrived(){const b=$('target');b.classList.remove('arrived');void b.offsetWidth;b.classList.add('arrived');}
+
+function renderTray(){
+  const t=$('tray');
+  if(!S.wps.length){t.innerHTML='<div class="empty">No waypoints yet. Tap DROP to mark where you are.</div>';return;}
+  t.innerHTML='';
+  S.wps.forEach(w=>{
+    const b=document.createElement('button');
+    b.className='chip'+(w.id===S.target?' t':'')+(w.visited?' v':'');
+    b.innerHTML=`<b>${w.visited?'✔ ':''}${w.name}</b><span data-d="${w.id}">--</span><span class="x" data-x="${w.id}">✕</span>`;
+    b.onclick=e=>{
+      if(e.target.dataset.x){S.wps=S.wps.filter(x=>x.id!==w.id);if(S.target===w.id){S.target=null;S.startDist=null;}save();renderTray();updateUI();return;}
+      S.target=w.id;w.visited=false;S.startDist=P.lat!=null?dist(P,w):null;save();renderTray();updateUI();buzz(20);
+    };
+    t.appendChild(b);
+  });
+  updateDists();
+}
+function updateDists(){
+  if(P.lat==null)return;
+  S.wps.forEach(w=>{const s=document.querySelector(`[data-d="${w.id}"]`);if(s)s.textContent=fmtD(dist(P,w));});
+}
+function addWp(lat,lon,target){
+  const n=S.counter++;
+  const name=NATO[n%26]+(n>=26?' '+(Math.floor(n/26)+1):'');
+  const w={id:Date.now()+''+n,name,lat,lon,visited:false};
+  S.wps.push(w);
+  if(target){S.target=w.id;S.startDist=P.lat!=null?dist(P,w):null;}
+  save();renderTray();updateUI();
+  buzz(40);toast('⚑ '+name+' DROPPED');
+  setTimeout(()=>{const t=$('tray');t.scrollLeft=t.scrollWidth;},50);
+}
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800);}
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}}
+
+$('drop').onclick=()=>{
+  if(P.lat==null){toast('WAITING FOR GPS FIX');return;}
+  addWp(P.lat,P.lon,false);
+};
+function addFromInput(){
+  const m=$('ll-in').value.match(/(-?\d+(?:\.\d+)?)[\s,]+(-?\d+(?:\.\d+)?)/);
+  if(!m){toast('USE: LAT, LON');return;}
+  const lat=+m[1],lon=+m[2];
+  if(Math.abs(lat)>90||Math.abs(lon)>180){toast('OUT OF RANGE');return;}
+  addWp(lat,lon,true);$('ll-in').value='';
+}
+$('ll-add').onclick=addFromInput;
+$('ll-in').onkeydown=e=>{if(e.key==='Enter')addFromInput();};
+
+/* ---------- compass ---------- */
+function onOrient(e){
+  let h=null;
+  if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;
+  else if(e.alpha!=null&&(e.absolute||e.type==='deviceorientationabsolute'))h=(360-e.alpha)%360;
+  if(h!=null){hTarget=h;lastCompass=Date.now();}
+}
+function draw(){
+  if(Date.now()-lastCompass>2000&&P.gpsHdg!=null)hTarget=P.gpsHdg;   // fall back to GPS course when moving
+  let d=((hTarget-H+540)%360)-180;H=(H+d*0.15+360)%360;
+  const cv=$('rose'),s=cv.clientWidth,dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(s*dpr)){cv.width=cv.height=Math.round(s*dpr);}
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,s,s);
+  const cx=s/2,cy=s/2,r=s/2-8,pt=(b,rr)=>[rr*Math.sin(rad(b)),-rr*Math.cos(rad(b))];
+  x.save();x.translate(cx,cy);x.rotate(-rad(H));
+  x.beginPath();x.arc(0,0,r,0,7);x.fillStyle=C.mantle;x.fill();x.strokeStyle=C.s1;x.lineWidth=2;x.stroke();
+  x.beginPath();x.arc(0,0,r*.76,0,7);x.strokeStyle=C.o0;x.lineWidth=1;x.stroke();
+  for(let i=0;i<360;i+=5){
+    const maj=i%45===0,mi=i%10===0,len=maj?.18:mi?.12:.07;
+    const [ox,oy]=pt(i,r),[ix,iy]=pt(i,r*(1-len));
+    x.beginPath();x.moveTo(ox,oy);x.lineTo(ix,iy);x.strokeStyle=(maj||mi)?C.sub:C.s2;x.lineWidth=maj?2:1;x.stroke();
+  }
+  x.textAlign='center';x.textBaseline='middle';
+  [['N',0,C.red,17],['E',90,C.text,15],['S',180,C.text,15],['W',270,C.text,15],['NE',45,C.sub,11],['SE',135,C.sub,11],['SW',225,C.sub,11],['NW',315,C.sub,11]].forEach(([l,b,c,z])=>{
+    const [lx,ly]=pt(b,r*.57);x.font=`bold ${z}px Rajdhani, monospace`;x.fillStyle=c;x.fillText(l,lx,ly);
+  });
+  // waypoints live on the rose, at their true bearing
+  if(P.lat!=null){
+    const tw=targetWp();
+    if(tw){ // line to target
+      const b=brg(P,tw),[tx,ty]=pt(b,r*.76);
+      x.beginPath();x.moveTo(0,0);x.lineTo(tx,ty);x.strokeStyle=C.peach+'AA';x.lineWidth=2;x.setLineDash([5,5]);x.stroke();x.setLineDash([]);
+    }
+    S.wps.forEach(w=>{
+      const b=brg(P,w),[wx,wy]=pt(b,r*.76),isT=w.id===S.target,rr=isT?11:8;
+      x.beginPath();x.arc(wx,wy,rr,0,7);
+      x.fillStyle=w.visited?C.mantle:isT?C.peach:C.teal;x.fill();
+      if(w.visited){x.strokeStyle=C.green;x.lineWidth=2;x.stroke();}
+      x.fillStyle=w.visited?C.green:C.crust||'#11111B';x.font='bold 11px Rajdhani, monospace';x.fillText(w.name[0],wx,wy+1);
+    });
+  }
+  x.restore();
+  // fixed heading arrow + lubber mark
+  x.save();x.translate(cx,cy);
+  x.strokeStyle=C.blue;x.fillStyle=C.blue;x.lineWidth=3;x.lineCap='round';
+  x.beginPath();x.moveTo(0,r*.2);x.lineTo(0,-r*.38);x.stroke();
+  x.beginPath();x.moveTo(0,-r*.5);x.lineTo(-8,-r*.34);x.lineTo(8,-r*.34);x.closePath();x.fill();
+  x.beginPath();x.arc(0,0,5,0,7);x.fillStyle=C.blue;x.fill();
+  x.restore();
+  const hs=Math.round(H)%360;
+  const e1=$('hdg');const txt=String(hs).padStart(3,'0')+'°';if(e1.textContent!==txt){e1.textContent=txt;$('hdgL').textContent=CARD[Math.round(H/45)%8];}
+  requestAnimationFrame(draw);
+}
+
+/* ---------- start / wake lock ---------- */
+let wl=null,wantWake=false;
+async function setWake(on){
+  wantWake=on;$('wake').classList.toggle('on',on);
+  try{if(on&&navigator.wakeLock)wl=await navigator.wakeLock.request('screen');else if(wl){await wl.release();wl=null;}}catch(e){}
+}
+$('wake').onclick=()=>setWake(!wantWake);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&wantWake)setWake(true);});
+
+$('startBtn').onclick=async()=>{
+  $('start').style.display='none';
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')await DeviceOrientationEvent.requestPermission();
+  }catch(e){}
+  if('ondeviceorientationabsolute' in window)window.addEventListener('deviceorientationabsolute',onOrient,true);
+  else window.addEventListener('deviceorientation',onOrient,true);
+  if(navigator.geolocation)navigator.geolocation.watchPosition(onFix,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+  else $('addr').textContent='Geolocation not supported on this device.';
+  setWake(true);
+  if(!started){started=true;}
+};
+
+renderTray();
+requestAnimationFrame(draw);
+setInterval(()=>{if(P.lat!=null)updateTarget();},2000);
+})();
+</script>
+</body>
+</html>
